@@ -1,5 +1,8 @@
 FROM alpine:latest
 
+# 设置 Alpine 软件源为阿里云镜像
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # 安装必要的构建工具和依赖
 RUN apk add --no-cache \
     nodejs \
@@ -11,6 +14,12 @@ RUN apk add --no-cache \
     build-base \
     gcc \
     musl-dev
+
+# 设置 npm 镜像为淘宝镜像
+RUN npm config set registry https://registry.npmmirror.com
+
+# 设置 Go 代理为国内源
+ENV GOPROXY=https://goproxy.cn,direct
 
 # 设置工作目录
 WORKDIR /app
