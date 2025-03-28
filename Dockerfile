@@ -10,7 +10,7 @@ RUN echo "VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}" > .env
 RUN npm run build
 
 # 后端构建阶段
-FROM golang:1.21-alpine AS backend-builder
+FROM golang:1.23.4-alpine AS backend-builder
 WORKDIR /app
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
