@@ -13,7 +13,8 @@ RUN apk add --no-cache \
     tzdata \
     build-base \
     gcc \
-    musl-dev
+    musl-dev \
+    bash
 
 # 设置 npm 镜像为淘宝镜像
 RUN npm config set registry https://registry.npmmirror.com
@@ -48,7 +49,7 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}" > .env
 # 创建数据目录
 RUN mkdir -p data
 
-# 清理构建工具和依赖，但保留必要的 C 库
+# 清理构建工具和依赖，但保留必要的 C 库和 bash
 RUN apk del \
     nodejs \
     npm \
@@ -95,3 +96,6 @@ EXPOSE 8080
 
 # 启动命令
 CMD ["./main"]
+
+# 设置入口为 bash
+ENTRYPOINT ["/bin/bash"]
