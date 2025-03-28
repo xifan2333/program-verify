@@ -1,0 +1,108 @@
+### 环境变量设置
+@baseUrl = http://localhost:8080
+@adminUsername = xifan
+@adminPassword = zhi583379
+
+### 管理员登录
+# @name login
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+    "username": "{{adminUsername}}",
+    "password": "{{adminPassword}}"
+}
+
+### 创建产品
+# @name createProduct
+POST {{baseUrl}}/api/v1/products
+Authorization: Bearer {{login.response.body.data.token}}
+Content-Type: application/json
+
+{
+    "name": "测试产品",
+    "price": 99.99
+}
+
+### 获取产品列表（支持分页和状态筛选）
+GET {{baseUrl}}/api/v1/products?page=1&page_size=10&status=enabled
+Authorization: Bearer {{login.response.body.data.token}}
+
+### 获取单个产品
+# @name getProduct
+GET {{baseUrl}}/api/v1/products/{{createProduct.response.body.data.id}}
+Authorization: Bearer {{login.response.body.data.token}}
+
+### 更新产品
+# @name updateProduct
+PUT {{baseUrl}}/api/v1/products/{{createProduct.response.body.data.id}}
+Authorization: Bearer {{login.response.body.data.token}}
+Content-Type: application/json
+
+{
+    "name": "更新后的产品",
+    "price": 199.99
+}
+
+### 禁用产品
+# @name disableProduct
+PUT {{baseUrl}}/api/v1/products/{{createProduct.response.body.data.id}}
+Authorization: Bearer {{login.response.body.data.token}}
+Content-Type: application/json
+
+{
+    "status": "disabled"
+}
+
+### 启用产品
+# @name enableProduct
+PUT {{baseUrl}}/api/v1/products/{{createProduct.response.body.data.id}}
+Authorization: Bearer {{login.response.body.data.token}}
+Content-Type: application/json
+
+{
+    "status": "enabled"
+}
+
+### 创建许可证
+# @name createLicense
+POST {{baseUrl}}/api/v1/licenses
+Authorization: Bearer {{login.response.body.data.token}}
+Content-Type: application/json
+
+{
+    "product_id": {{createProduct.response.body.data.id}},
+    "duration_days": 365,
+    "count": 5,
+    "remark": ""
+}
+
+### 获取许可证列表（支持分页和状态筛选）
+# @name getLicenses
+GET {{baseUrl}}/api/v1/licenses?page=1&page_size=10&activation_status=inactive&enable_status=enabled&product_id={{createProduct.response.body.data.id}}
+Authorization: Bearer {{login.response.body.data.token}}
+
+### 获取单个许可证
+# @name getLicense
+GET {{baseUrl}}/api/v1/licenses/{{createLicense.response.body.data.licenses[0].id}}
+Authorization: Bearer {{login.response.body.data.token}}
+
+### 更新许可证
+# @name updateLicense
+PUT {{baseUrl}}/api/v1/licenses/{{createLicense.response.body.data.licenses[0].id}}
+Authorization: Bearer {{login.response.body.data.token}}
+Content-Type: application/json
+
+{
+    "enable_status": "disabled",
+    "remark": "已禁用"
+}
+
+### 验证/激活许可证
+# @name verifyLicense
+POST {{baseUrl}}/api/v1/licenses/verify
+Content-Type: application/json
+
+{
+    "license_key": "UFMbtAOIfY8KDSMZowNQd7G7lTgEF4DoGJk0aydQDWc="
+}
