@@ -1,19 +1,18 @@
 # 前端构建阶段
 FROM node:18-alpine AS frontend-builder
+WORKDIR /app
+COPY . .
+
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
 RUN npm install
-COPY frontend/ .
 # 创建前端环境变量文件
 RUN echo "VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}" > .env
 RUN npm run build
 
 # 后端构建阶段
 FROM golang:1.21-alpine AS backend-builder
-WORKDIR /app/backend
-COPY backend/go.mod backend/go.sum ./
+WORKDIR /app
 RUN go mod download
-COPY backend/ .
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # 最终运行阶段
@@ -30,13 +29,6 @@ JWT_SECRET=${JWT_SECRET:-your-secret-key}\n\
 ADMIN_USERNAME=${ADMIN_USERNAME:-admin}\n\
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}" > .env
 
-
-
-# 从后端构建阶段复制二进制文件
-COPY --from=backend-builder /app/backend/main ./main
-
-# 清除构建过程
-RUN rm -rf /app/backend
 RUN rm -rf /app/frontend
 
 # 设置工作目录
