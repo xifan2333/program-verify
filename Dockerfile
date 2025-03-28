@@ -37,7 +37,7 @@ RUN npm run build
 # 构建后端
 WORKDIR /app
 RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+RUN GOOS=linux go build -o main .
 
 # 创建环境变量文件
 RUN echo "PORT=${PORT:-8080}\n\
