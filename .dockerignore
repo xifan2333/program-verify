@@ -3,3 +3,13 @@
 **/.env.production
 **/pnpm-lock.yaml
 data/
+.git
+.gitignore
+README.md
+.env.example
+*.md
+*.log
+.DS_Store
+node_modules
+tmp
+temp
