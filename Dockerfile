@@ -37,7 +37,7 @@ RUN npm run build
 # 构建后端
 WORKDIR /app
 RUN go mod download
-RUN GOOS=linux go build -o main .
+RUN CGO_ENABLED=1 GOOS=linux go build -o main .
 
 # 创建环境变量文件
 RUN echo "PORT=${PORT:-8080}\n\
@@ -62,19 +62,7 @@ RUN apk del \
 
 # 清理源码和构建文件，只保留必要文件
 RUN rm -rf \
-    /app/frontend/node_modules \
-    /app/frontend/src \
-    /app/frontend/public \
-    /app/frontend/.vscode \
-    /app/frontend/.env.example \
-    /app/frontend/.env.production \
-    /app/frontend/.npmrc \
-    /app/frontend/tsconfig.* \
-    /app/frontend/vite.config.ts \
-    /app/frontend/uno.config.ts \
-    /app/frontend/package.json \
-    /app/frontend/pnpm-lock.yaml \
-    /app/frontend/README.md \
+    /app/frontend \
     /app/internal \
     /app/go.mod \
     /app/go.sum \
