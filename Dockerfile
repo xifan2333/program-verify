@@ -48,7 +48,7 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}" > .env
 # 创建数据目录
 RUN mkdir -p data
 
-# 清理构建工具和依赖
+# 清理构建工具和依赖，但保留必要的 C 库
 RUN apk del \
     nodejs \
     npm \
@@ -56,7 +56,36 @@ RUN apk del \
     git \
     build-base \
     gcc \
-    musl-dev
+    musl-dev \
+    && rm -rf /var/cache/apk/*
+
+# 清理源码和构建文件，只保留必要文件
+RUN rm -rf \
+    /app/frontend/node_modules \
+    /app/frontend/src \
+    /app/frontend/public \
+    /app/frontend/.vscode \
+    /app/frontend/.env.example \
+    /app/frontend/.env.production \
+    /app/frontend/.npmrc \
+    /app/frontend/tsconfig.* \
+    /app/frontend/vite.config.ts \
+    /app/frontend/uno.config.ts \
+    /app/frontend/package.json \
+    /app/frontend/pnpm-lock.yaml \
+    /app/frontend/README.md \
+    /app/internal \
+    /app/go.mod \
+    /app/go.sum \
+    /app/.git \
+    /app/.gitignore \
+    /app/README.md \
+    /app/api.http \
+    /app/.env.example \
+    /root/.npm \
+    /root/.cache \
+    /root/go \
+    /tmp/*
 
 # 设置工作目录
 WORKDIR /app
