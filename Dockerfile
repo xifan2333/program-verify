@@ -14,7 +14,8 @@ RUN apk add --no-cache \
     build-base \
     gcc \
     musl-dev \
-    bash
+    bash \
+    sqlite-dev
 
 # 设置 npm 镜像为淘宝镜像
 RUN npm config set registry https://registry.npmmirror.com
@@ -37,7 +38,8 @@ RUN npm run build
 # 构建后端
 WORKDIR /app
 RUN go mod download
-RUN CGO_ENABLED=1 GOOS=linux go build -o main .
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o main .
+RUN chmod +x main
 
 # 创建环境变量文件
 RUN echo "PORT=${PORT:-8080}\n\
@@ -47,7 +49,7 @@ ADMIN_USERNAME=${ADMIN_USERNAME:-admin}\n\
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}" > .env
 
 # 创建数据目录
-RUN mkdir -p data
+RUN mkdir -p data && chmod 777 data
 
 # 清理构建工具和依赖，但保留必要的 C 库和 bash
 RUN apk del \
