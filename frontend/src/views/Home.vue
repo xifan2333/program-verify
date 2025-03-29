@@ -4,9 +4,9 @@ import { useToast } from '../plugins/toast'
 import type { ApiResponse, StatsSummary, ProductActivation, RevenueTrendData } from '../api/types'
 import { api, API_ROUTES } from '../api/config'
 import * as echarts from 'echarts'
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
+
+
 const toast = useToast()
 const loading = ref(false)
 const revenueChartRef = ref<HTMLElement>()
@@ -270,7 +270,7 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-6">
-    <h1 class="text-2xl font-bold">系统概览</h1>
+    <h1 class="text-2xl font-bold mb-4">系统概览</h1>
     
     <!-- 加载状态 -->
     <div v-if="loading" class="flex-center py-8">
