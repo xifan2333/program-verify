@@ -1,3 +1,6 @@
+
+import { globalToastMethods } from "../plugins/toast";
+const toast = globalToastMethods;
 // API配置
 export const API_CONFIG = {
   // API基础URL
@@ -16,7 +19,13 @@ export const API_CONFIG = {
 export const API_ROUTES = {
   // 认证相关
   AUTH: {
-    LOGIN: '/auth/login'
+    LOGIN: '/auth/login',
+    VERIFY: '/auth/verify'  // 添加验证接口
+  },
+  
+  // 用户相关
+  USER: {
+    UPDATE: '/user/update'
   },
   
   // 产品相关
@@ -46,6 +55,16 @@ export const API_ROUTES = {
   }
 }
 
+// 统一处理未授权
+const handleUnauthorized = () => {
+  localStorage.removeItem('token')
+  toast.error('无效的令牌认证，请重新登录')
+  // 如果在路由守卫中，不需要重复跳转
+  if (!window.location.pathname.includes('/login')) {
+    window.location.href = '/login'
+  }
+}
+
 // API请求工具函数
 export const api = {
   // 获取认证头
@@ -66,63 +85,91 @@ export const api = {
   },
   
   // 处理响应
-  handleResponse: async (response: Response) => {
+  handleResponse: async <T>(response: Response): Promise<T> => {
     const data = await response.json()
+    
+    // 处理未授权
+    if (response.status === 401 || data.status === 401) {
+      handleUnauthorized()
+      throw new Error('无效的令牌认证，请重新登录')
+    }
+    
+    // 处理其他错误
     if (!response.ok) {
-      throw new Error(data.message || '请求失败')
+      const errorMessage = data.message || '请求失败'
+      throw new Error(errorMessage)
     }
     return data
   },
   
   // GET请求
-  get: async (path: string, params?: Record<string, string>) => {
+  get: async <T>(path: string, params?: Record<string, string>): Promise<T> => {
     const url = api.buildUrl(path)
     const finalUrl = params ? `${url}?${new URLSearchParams(params).toString()}` : url
     
-    const response = await fetch(finalUrl, {
-      headers: {
-        ...API_CONFIG.HEADERS,
-        ...api.getAuthHeader()
-      }
-    })
-    return api.handleResponse(response)
+    try {
+      const response = await fetch(finalUrl, {
+        headers: {
+          ...API_CONFIG.HEADERS,
+          ...api.getAuthHeader()
+        }
+      })
+      return api.handleResponse<T>(response)
+    } catch (error) {
+      throw error
+    }
   },
   
   // POST请求
-  post: async (path: string, data?: any) => {
-    const response = await fetch(api.buildUrl(path), {
-      method: 'POST',
-      headers: {
-        ...API_CONFIG.HEADERS,
-        ...api.getAuthHeader()
-      },
-      body: data ? JSON.stringify(data) : undefined
-    })
-    return api.handleResponse(response)
+  post: async <T>(path: string, data?: any): Promise<T> => {
+    try {
+      const response = await fetch(api.buildUrl(path), {
+        method: 'POST',
+        headers: {
+          ...API_CONFIG.HEADERS,
+          ...api.getAuthHeader()
+        },
+        body: data ? JSON.stringify(data) : undefined
+      })
+      return api.handleResponse<T>(response)
+    } catch (error) {
+      throw error
+    }
   },
   
   // PUT请求
-  put: async (path: string, data?: any) => {
-    const response = await fetch(api.buildUrl(path), {
-      method: 'PUT',
-      headers: {
-        ...API_CONFIG.HEADERS,
-        ...api.getAuthHeader()
-      },
-      body: data ? JSON.stringify(data) : undefined
-    })
-    return api.handleResponse(response)
+  put: async <T>(path: string, data?: any): Promise<T> => {
+    try {
+      const response = await fetch(api.buildUrl(path), {
+        method: 'PUT',
+        headers: {
+          ...API_CONFIG.HEADERS,
+          ...api.getAuthHeader()
+        },
+        body: data ? JSON.stringify(data) : undefined
+      })
+      return api.handleResponse<T>(response)
+    } catch (error) {
+      throw error
+    }
   },
   
   // DELETE请求
-  delete: async (path: string) => {
-    const response = await fetch(api.buildUrl(path), {
-      method: 'DELETE',
-      headers: {
-        ...API_CONFIG.HEADERS,
-        ...api.getAuthHeader()
-      }
-    })
-    return api.handleResponse(response)
+  delete: async <T>(path: string): Promise<T> => {
+    try {
+      const response = await fetch(api.buildUrl(path), {
+        method: 'DELETE',
+        headers: {
+          ...API_CONFIG.HEADERS,
+          ...api.getAuthHeader()
+        }
+      })
+      return api.handleResponse<T>(response)
+    } catch (error) {
+      throw error
+    }
   }
-} 
+}
+
+
+

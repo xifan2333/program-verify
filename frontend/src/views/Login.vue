@@ -2,11 +2,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from '../plugins/toast'
-import { http } from '../utils/request'
-
-interface LoginResponse {
-  token: string
-}
+import { API_ROUTES, api } from '../api/config'
+import type { ApiResponse, LoginResponse } from '../api/types'
 
 const router = useRouter()
 const toast = useToast()
@@ -22,21 +19,24 @@ const handleLogin = async () => {
   
   loading.value = true
   try {
-    const { status, message, data } = await http.post<LoginResponse>('/auth/login', {
-      username: username.value,
-      password: password.value
-    })
+    const response = await api.post<ApiResponse<LoginResponse>>(
+      API_ROUTES.AUTH.LOGIN,
+      {
+        username: username.value,
+        password: password.value
+      }
+    )
     
-    if (status === 200) {
-      localStorage.setItem('token', data.token)
-      toast.success(message)
+    if (response.status === 200) {
+      localStorage.setItem('token', response.data.token)
+      toast.success(response.message)
       router.replace('/')
     } else {
-      toast.error(message || '登录失败')
+      toast.error(response.message || '登录失败')
     }
   } catch (error) {
-    console.error('登录错误:', error)
-    toast.error('登录失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '登录失败')
+    console.error(error)
   } finally {
     loading.value = false
   }

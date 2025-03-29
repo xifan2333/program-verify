@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useToast } from '../plugins/toast'
-import type { License, Product } from '../api/api'
+import type { ApiResponse, License, Product, PaginationData } from '../api/types'
 import { api, API_ROUTES } from '../api/config'
 import * as XLSX from 'xlsx'
 
@@ -191,15 +191,16 @@ const fetchLicenses = async () => {
       ...(filters.value.remark && { remark: filters.value.remark })
     }
 
-    const data = await api.get(API_ROUTES.LICENSES.LIST, params)
-    if (data.status === 200) {
-      licenses.value = data.data.items
-      total.value = data.data.total
+    const response = await api.get<ApiResponse<PaginationData<License>>>(API_ROUTES.LICENSES.LIST, params)
+    if (response.status === 200) {
+      licenses.value = response.data.items
+      total.value = response.data.total
     } else {
-      toast.error(data.message || '获取许可证列表失败')
+      toast.error(response.message || '获取许可证列表失败')
     }
   } catch (error) {
-    toast.error('获取许可证列表失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '获取许可证列表失败')
+    console.error(error)
   } finally {
     loading.value = false
   }
@@ -207,15 +208,17 @@ const fetchLicenses = async () => {
 
 const fetchProducts = async () => {
   try {
-    const data = await api.get(API_ROUTES.PRODUCTS.LIST, { status: 'enabled' })
-    if (data.status === 200) {
-      products.value = data.data.items
+    const response = await api.get<ApiResponse<PaginationData<Product>>>(API_ROUTES.PRODUCTS.LIST, { status: 'enabled' })
+    if (response.status === 200) {
+      products.value = response.data.items
     } else {
-      toast.error(data.message || '获取产品列表失败')
+      toast.error(response.message || '获取产品列表失败')  
     }
   } catch (error) {
-    console.error('获取产品列表失败:', error)
-    toast.error('获取产品列表失败，请稍后重试')
+    
+    toast.error(error instanceof Error ? error.message : '获取产品列表失败')
+    console.error(error)
+    
   }
 }
 
@@ -223,49 +226,52 @@ const handleGenerate = async () => {
   if (!formData.value.product_id) return
   
   try {
-    const data = await api.post(API_ROUTES.LICENSES.CREATE, formData.value)
-    if (data.status === 200) {
+    const response = await api.post<ApiResponse<{ count: number }>>(API_ROUTES.LICENSES.CREATE, formData.value)
+    if (response.status === 200) {
       showGenerateModal.value = false
       formData.value = { product_id: 0, duration_days: 365, count: 1, remark: '' }
-      toast.success(data.message)
+      toast.success(response.message)
       fetchLicenses()
     } else {
-      toast.error(data.message || '生成失败')
+      toast.error(response.message || '生成失败')
     }
   } catch (error) {
-    toast.error('生成失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '生成失败')
+    console.error(error)
   }
 }
 
 const handleDisable = async (id: number) => {
   try {
-    const data = await api.put(API_ROUTES.LICENSES.UPDATE(id), {
+    const response = await api.put<ApiResponse<null>>(API_ROUTES.LICENSES.UPDATE(id), {
       enable_status: 'disabled'
     })
-    if (data.status === 200) {
-      toast.success(data.message)
+    if (response.status === 200) {
+      toast.success(response.message)
       fetchLicenses()
     } else {
-      toast.error(data.message || '操作失败')
+      toast.error(response.message || '操作失败')
     }
   } catch (error) {
-    toast.error('操作失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '操作失败')
+    console.error(error)
   }
 }
 
 const handleEnable = async (id: number) => {
   try {
-    const data = await api.put(API_ROUTES.LICENSES.UPDATE(id), {
+    const response = await api.put<ApiResponse<null>>(API_ROUTES.LICENSES.UPDATE(id), {
       enable_status: 'enabled'
     })
-    if (data.status === 200) {
-      toast.success(data.message)
+    if (response.status === 200) {
+      toast.success(response.message)
       fetchLicenses()
     } else {
-      toast.error(data.message || '操作失败')
+      toast.error(response.message || '操作失败')
     }
   } catch (error) {
-    toast.error('操作失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '操作失败')
+    console.error(error)
   }
 }
 
@@ -297,18 +303,19 @@ const handleEdit = async () => {
       return
     }
     
-    const data = await api.put(API_ROUTES.LICENSES.UPDATE(currentLicense.value.id), updateData)
-    if (data.status === 200) {
+    const response = await api.put<ApiResponse<License>>(API_ROUTES.LICENSES.UPDATE(currentLicense.value.id), updateData)
+    if (response.status === 200) {
       showEditModal.value = false
       currentLicense.value = null
       editFormData.value = { remark: '', expires_at: '' }
-      toast.success(data.message)
+      toast.success(response.message)
       fetchLicenses()
     } else {
-      toast.error(data.message || '更新失败')
+      toast.error(response.message || '更新失败')
     }
   } catch (error) {
-    toast.error('更新失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '更新失败')
+    console.error(error)
   }
 }
 

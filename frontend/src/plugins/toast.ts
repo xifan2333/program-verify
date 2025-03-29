@@ -41,6 +41,17 @@ class ToastManager {
   }
 }
 
+// 创建全局 toast 实例
+const globalToast = new ToastManager()
+
+// 导出全局 toast 方法
+export const globalToastMethods = {
+  success: (message: string, duration?: number) => globalToast.create({ message, type: 'success', duration }),
+  error: (message: string, duration?: number) => globalToast.create({ message, type: 'error', duration }),
+  warning: (message: string, duration?: number) => globalToast.create({ message, type: 'warning', duration }),
+  info: (message: string, duration?: number) => globalToast.create({ message, type: 'info', duration })
+}
+
 const toastManager = new ToastManager()
 
 export const useToast = () => {

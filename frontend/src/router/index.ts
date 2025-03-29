@@ -1,46 +1,63 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
+import type { RouteRecordRaw } from "vue-router";
+import { api } from "../api/config";
+
+const routes: RouteRecordRaw[] = [
+  {
+    path: "/login",
+    name: "Login",
+    component: () => import("../views/Login.vue"),
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/",
+    name: "Layout",
+    component: () => import("../views/Layout.vue"),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        name: "Home",
+        component: () => import("../views/Home.vue"),
+      },
+      {
+        path: "products",
+        name: "Products",
+        component: () => import("../views/Products.vue"),
+      },
+      {
+        path: "licenses",
+        name: "Licenses",
+        component: () => import("../views/Licenses.vue"),
+      },
+    ],
+  },
+];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [
-    {
-      path: '/login',
-      name: 'Login',
-      component: () => import('../views/Login.vue')
-    },
-    {
-      path: '/',
-      name: 'Layout',
-      component: () => import('../views/Layout.vue'),
-      children: [
-        {
-          path: '',
-          name: 'Home',
-          component: () => import('../views/Home.vue')
-        },
-        {
-          path: 'products',
-          name: 'Products',
-          component: () => import('../views/Products.vue')
-        },
-        {
-          path: 'licenses',
-          name: 'Licenses',
-          component: () => import('../views/Licenses.vue')
-        },
-      ]
-    }
-  ]
-})
+  routes,
+});
 
 // 路由守卫
-router.beforeEach((to, _, next) => {
-  const token = localStorage.getItem('token')
-  if (to.path !== '/login' && !token) {
-    next('/login')
-  } else {
-    next()
-  }
-})
+router.beforeEach(async (to, from, next) => {
+  const token = localStorage.getItem("token");
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-export default router
+  // 处理未授权情况
+  const handleUnauthorized = () => {
+    localStorage.removeItem("token");
+    next({
+      path: "/login",
+      query: { redirect: to.fullPath },
+    });
+  };
+
+  if (requiresAuth && !token) {
+    handleUnauthorized();
+  } else {
+    next();
+  }
+});
+
+export default router;

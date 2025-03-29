@@ -5,6 +5,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"program-verify/internal/config"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -16,6 +18,7 @@ func InitDB(dbPath string) error {
 	if err != nil {
 		return err
 	}
+	cfg := config.LoadConfig()
 
 	// 创建表
 	_, err = DB.Exec(`
@@ -61,8 +64,12 @@ func InitDB(dbPath string) error {
 
 	// 如果不存在管理员用户，创建默认管理员
 	if count == 0 {
+		// 从配置获取管理员信息
+		adminUsername := cfg.AdminUsername
+		adminPassword := cfg.AdminPassword
+
 		// 生成密码哈希
-		passwordHash, err := bcrypt.GenerateFromPassword([]byte("zhi583379"), bcrypt.DefaultCost)
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
@@ -70,7 +77,7 @@ func InitDB(dbPath string) error {
 		// 插入默认管理员用户
 		_, err = DB.Exec(
 			"INSERT INTO users (username, password_hash) VALUES (?, ?)",
-			"xifan", string(passwordHash),
+			adminUsername, string(passwordHash),
 		)
 		if err != nil {
 			return err

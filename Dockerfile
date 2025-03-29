@@ -1,78 +1,68 @@
-# 后端构建阶段
-FROM golang:1.23-alpine AS backend-builder
+FROM node AS builder-frontend
 
-# 设置 Alpine 软件源为阿里云镜像
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+WORKDIR /frontend
+# 复制 package.json 和 pnpm-lock.yaml
+COPY ./frontend/package.json ./
 
-# 设置 Go 代理为国内源
-ENV GOPROXY=https://goproxy.cn,direct
+# 安装依赖
+RUN npm install
 
-# 设置 CGO 环境变量
-ENV CGO_ENABLED=1
+# 复制前端源代码
+COPY ./frontend/ .
 
-# 设置时区和语言
-ENV TZ=Asia/Shanghai
-ENV LANG=C.UTF-8
+# 构建前端（使用环境变量）
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}
+RUN npm run build
 
-# 安装构建依赖
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
-    sqlite-dev \
-    build-base
+FROM golang AS builder-backend
 
-# 设置工作目录
-WORKDIR /app
+WORKDIR /backend
 
-# 复制后端代码
+
+ENV GO111MODULE=on \
+    CGO_ENABLED=1 \
+    GOOS=linux 
+    
+    # 复制 Go 依赖文件
+COPY go.mod go.sum ./
+
+# 下载依赖
+RUN go mod download
+
+# 复制源代码
 COPY . .
 
-# 下载依赖并构建
-RUN go mod download
-RUN go build -o main .
-RUN chmod +x main
+# 复制前端构建产物
+COPY --from=builder-frontend /frontend/dist ./static
 
-# 运行阶段
+# 构建后端
+RUN go build -ldflags="-s -w -extldflags '-static'" -o LicenseManager ./main.go
+
 FROM alpine:latest
 
-# 设置 Alpine 软件源为阿里云镜像
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-
-# 设置时区和语言
-ENV TZ=Asia/Shanghai
-ENV LANG=C.UTF-8
-
-# 安装运行时依赖
-RUN apk add --no-cache \
-    ca-certificates \
-    tzdata \
-    sqlite-dev \
-    bash
-
-# 设置工作目录
 WORKDIR /app
 
-# 从构建阶段复制必要文件
-COPY --from=backend-builder /app/main .
-COPY --from=backend-builder /app/static ./static
-COPY --from=backend-builder /app/.env .
+# 复制后端二进制文件并设置权限
+COPY --from=builder-backend /backend/LicenseManager /app/LicenseManager
+RUN chmod +x /app/LicenseManager
 
-# 创建数据目录
-RUN mkdir -p data && chmod 777 data
+# 复制前端文件
+COPY --from=builder-frontend /frontend/dist /app/static
 
-# 创建启动脚本
-RUN echo '#!/bin/bash\n\
-if [ "$1" = "shell" ]; then\n\
-    exec /bin/bash\n\
-else\n\
-    exec ./main "$@"\n\
-fi' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+# 安装必要的系统包
+RUN apk update \
+    && apk upgrade \
+    && apk add --no-cache \
+    ca-certificates \
+    && update-ca-certificates 2>/dev/null || true
 
-# 暴露端口
+# 创建数据目录并设置权限
+RUN mkdir -p /app/data && chmod 777 /app/data
+
 EXPOSE 8080
 
-# 设置入口点
-ENTRYPOINT ["/app/entrypoint.sh"]
+# 使用JSON格式的CMD
+CMD ["/app/LicenseManager"]
 
-# 设置默认命令
-CMD ["./main"]
+

@@ -34,9 +34,9 @@ func LoadConfig() *Config {
 	// 设置静态文件路径
 	execPath, err := os.Executable()
 	if err != nil {
-		cfg.StaticPath = "frontend/dist"
+		cfg.StaticPath = "static"
 	} else {
-		cfg.StaticPath = filepath.Join(filepath.Dir(execPath), "frontend/dist")
+		cfg.StaticPath = filepath.Join(filepath.Dir(execPath), "static")
 	}
 
 	return cfg

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useToast } from '../plugins/toast'
-import type { Product } from '../api/api'
+import type { ApiResponse, Product, PaginationData } from '../api/types'
 import { api, API_ROUTES } from '../api/config'
 import * as XLSX from 'xlsx'
 
@@ -115,11 +115,12 @@ const fetchProducts = async () => {
       ...(filters.value.end_date && { end_date: filters.value.end_date })
     }
 
-    const data = await api.get(API_ROUTES.PRODUCTS.LIST, params)
-    products.value = data.data.items
-    total.value = data.data.total
+    const response = await api.get<ApiResponse<PaginationData<Product>>>(API_ROUTES.PRODUCTS.LIST, params)
+    products.value = response.data.items
+    total.value = response.data.total
   } catch (error) {
-    toast.error(error instanceof Error ? error.message : '获取产品列表失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '获取统计数据失败')
+    console.error(error)
   } finally {
     loading.value = false
   }
@@ -138,12 +139,17 @@ const handleCreate = async () => {
   if (!validateProductForm()) return
   
   try {
-    await api.post(API_ROUTES.PRODUCTS.CREATE, formData.value)
-    showCreateModal.value = false
-    formData.value = { name: '', price: 0 }
-    fetchProducts()
+    const response = await api.post<ApiResponse<Product>>(API_ROUTES.PRODUCTS.CREATE, formData.value)
+    if (response.status === 200) {
+      showCreateModal.value = false
+      formData.value = { name: '', price: 0 }
+      fetchProducts()
+    } else {
+      toast.error(response.message || '创建失败')
+    }
   } catch (error) {
     toast.error(error instanceof Error ? error.message : '创建失败，请稍后重试')
+    console.error(error)
   }
 }
 
@@ -153,45 +159,48 @@ const handleEdit = async () => {
   if (!validateProductForm()) return
   
   try {
-    const data = await api.put(API_ROUTES.PRODUCTS.UPDATE(currentProduct.value.id), formData.value)
-    if (data.status === 200) {
+    const response = await api.put<ApiResponse<Product>>(API_ROUTES.PRODUCTS.UPDATE(currentProduct.value.id), formData.value)
+    if (response.status === 200) {
       showEditModal.value = false
       currentProduct.value = null
       formData.value = { name: '', price: 0 }
       fetchProducts()
     } else {
-      toast.error(data.message || '更新失败')
+      toast.error(response.message || '更新失败')
     }
   } catch (error) {
-    toast.error(error instanceof Error ? error.message : '更新失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '获取统计数据失败')
+    console.error(error)
   }
 }
 
 const handleDisable = async (id: number) => {
   try {
-    const data = await api.put(API_ROUTES.PRODUCTS.UPDATE(id), { status: 'disabled' })
-    if (data.status === 200) {
-      toast.success(data.message)
+    const response = await api.put<ApiResponse<null>>(API_ROUTES.PRODUCTS.UPDATE(id), { status: 'disabled' })
+    if (response.status === 200) {
+      toast.success(response.message)
       fetchProducts()
     } else {
-      toast.error(data.message || '禁用产品失败')
+      toast.error(response.message || '禁用产品失败')
     }
   } catch (error) {
-    toast.error(error instanceof Error ? error.message : '操作失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '禁用产品失败')
+    console.error(error)
   }
 }
 
 const handleEnable = async (id: number) => {
   try {
-    const data = await api.put(API_ROUTES.PRODUCTS.UPDATE(id), { status: 'enabled' })
-    if (data.status === 200) {
-      toast.success(data.message)
+    const response = await api.put<ApiResponse<null>>(API_ROUTES.PRODUCTS.UPDATE(id), { status: 'enabled' })
+    if (response.status === 200) {
+      toast.success(response.message)
       fetchProducts()
     } else {
-      toast.error(data.message || '重新启用产品失败')
+      toast.error(response.message || '重新启用产品失败')
     }
   } catch (error) {
-    toast.error(error instanceof Error ? error.message : '操作失败，请稍后重试')
+    toast.error(error instanceof Error ? error.message : '重新启用产品失败')
+    console.error(error)
   }
 }
 

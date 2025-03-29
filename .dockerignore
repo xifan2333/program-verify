@@ -1,5 +1,4 @@
 **/.env
-**/.env.example
 **/.env.production
 **/pnpm-lock.yaml
 data/
@@ -10,6 +9,6 @@ README.md
 *.md
 *.log
 .DS_Store
-node_modules
+frontend/node_modules
 tmp
 temp

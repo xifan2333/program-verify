@@ -129,3 +129,33 @@ func (s *AuthService) AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// VerifyToken 验证token接口
+func (s *AuthService) VerifyToken(c *gin.Context) {
+	// 获取Authorization头
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, model.Error(http.StatusUnauthorized, "未提供认证令牌"))
+		return
+	}
+
+	// 检查Bearer前缀
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, model.Error(http.StatusUnauthorized, "无效的认证令牌格式"))
+		return
+	}
+
+	// 验证token
+	claims, err := s.ValidateToken(parts[1])
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, model.Error(http.StatusUnauthorized, "无效的认证令牌"))
+		return
+	}
+
+	// 返回验证成功
+	c.JSON(http.StatusOK, model.Success(gin.H{
+		"user_id":  (*claims)["user_id"],
+		"username": (*claims)["username"],
+	}, "token验证成功"))
+}

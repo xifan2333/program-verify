@@ -17,6 +17,7 @@ func SetupRouter() *gin.Engine {
 
 	// 创建认证服务
 	authService := service.NewAuthService(cfg.JWTSecret)
+	staticPath := cfg.StaticPath
 
 	// 创建Gin引擎
 	r := gin.Default()
@@ -31,8 +32,8 @@ func SetupRouter() *gin.Engine {
 	r.Use(cors.New(config))
 
 	// 静态文件服务
-	r.Static("/assets", "./static/assets")
-	r.StaticFile("/favicon.ico", "./static/favicon.ico")
+	r.Static("/assets", staticPath+"/assets")
+	r.StaticFile("/favicon.ico", staticPath+"/favicon.ico")
 
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
@@ -40,11 +41,18 @@ func SetupRouter() *gin.Engine {
 		// 公开路由
 		v1.POST("/auth/login", authService.Login)
 		v1.POST("/licenses/verify", handler.VerifyLicense)
+		v1.GET("/auth/verify", authService.VerifyToken)
 
 		// 需要认证的路由
 		authorized := v1.Group("")
 		authorized.Use(authService.AuthMiddleware())
 		{
+			// 用户相关路由
+			user := authorized.Group("/user")
+			{
+				user.PUT("/update", handler.UpdateUserInfo(authService))
+			}
+
 			// 产品相关路由
 			product := authorized.Group("/products")
 			{

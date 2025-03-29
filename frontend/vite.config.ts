@@ -9,7 +9,7 @@ export default defineConfig({
     UnoCSS(),
   ],
   build: {
-    outDir: '../static',
+    outDir: './dist',
     assetsDir: 'assets',
     emptyOutDir: true,
     rollupOptions: {

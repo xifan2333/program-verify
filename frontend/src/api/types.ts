@@ -18,6 +18,7 @@ export interface Product {
 // 登录响应接口
 export interface LoginResponse {
   token: string
+  username: string
 }
 
 // 许可证接口
@@ -36,7 +37,7 @@ export interface License {
 }
 
 // API 响应接口
-export interface ApiResponse<T> {
+export interface ApiResponse<T = any> {
   status: number
   message: string
   data: T
@@ -149,4 +150,17 @@ export interface RevenueTrendData {
   revenue: number[]
   total: number
   average: number
+}
+
+// 更新用户请求接口
+export interface UpdateUserRequest {
+  current_password: string
+  new_username: string
+  new_password: string
+}
+
+// 更新用户响应接口
+export interface UpdateUserResponse {
+  token: string
+  username: string
 } 

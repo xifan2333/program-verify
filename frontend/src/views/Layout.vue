@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from '../plugins/toast'
+import UpdateUserInfo from '../components/UpdateUserInfo.vue'
+import type { UpdateUserResponse } from '../api/types'
 
 const router = useRouter()
+const toast = useToast()
 const isCollapsed = ref(false)
+const showUpdateDialog = ref(false)
 
 const handleLogout = () => {
   localStorage.removeItem('token')
   router.push('/login')
+}
+
+const handleUpdateSuccess = (data: UpdateUserResponse) => {
+  localStorage.setItem('token', data.token)
+  toast.success('用户信息更新成功')
 }
 
 const menuItems = [
@@ -66,9 +76,14 @@ const menuItems = [
       <!-- 顶部导航栏 -->
       <header class="h-16 bg-white dark:bg-gray-800 shadow-sm flex items-center justify-between px-6">
         <h2 class="text-lg font-semibold">{{ $route.name }}</h2>
-        <button class="icon-btn" @click="handleLogout">
-          <div class="i-ri-logout-box-line"></div>
-        </button>
+        <div class="flex items-center gap-4">
+          <button class="icon-btn" @click="showUpdateDialog = true">
+            <div class="i-ri-user-settings-line"></div>
+          </button>
+          <button class="icon-btn" @click="handleLogout">
+            <div class="i-ri-logout-box-line"></div>
+          </button>
+        </div>
       </header>
 
       <!-- 页面内容 -->
@@ -76,5 +91,10 @@ const menuItems = [
         <router-view></router-view>
       </div>
     </main>
+
+    <UpdateUserInfo
+      v-model:show="showUpdateDialog"
+      @update:success="handleUpdateSuccess"
+    />
   </div>
 </template> 

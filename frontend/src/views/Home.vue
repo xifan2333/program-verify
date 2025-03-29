@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useToast } from '../plugins/toast'
-import type { StatsSummary, ProductActivation, RevenueTrendData } from '../api/api'
+import type { ApiResponse, StatsSummary, ProductActivation, RevenueTrendData } from '../api/types'
 import { api, API_ROUTES } from '../api/config'
 import * as echarts from 'echarts'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const toast = useToast()
 const loading = ref(false)
 const revenueChartRef = ref<HTMLElement>()
@@ -56,28 +58,23 @@ const fetchStats = async () => {
   loading.value = true
   try {
     const [statsRes, trendRes, activationRes] = await Promise.all([
-      api.get(API_ROUTES.ANALYTICS.STATS),
-      api.get(API_ROUTES.ANALYTICS.REVENUE_TREND),
-      api.get(API_ROUTES.ANALYTICS.PRODUCT_ACTIVATION)
+      api.get<ApiResponse<StatsSummary>>(API_ROUTES.ANALYTICS.STATS),
+      api.get<ApiResponse<RevenueTrendData>>(API_ROUTES.ANALYTICS.REVENUE_TREND),
+      api.get<ApiResponse<ProductActivation>>(API_ROUTES.ANALYTICS.PRODUCT_ACTIVATION)
     ])
 
     if (statsRes.status === 200) {
       stats.value = statsRes.data
     }
     if (trendRes.status === 200) {
-      revenueTrend.value = {
-        dates: trendRes.data.dates,
-        revenue: trendRes.data.revenue,
-        total: trendRes.data.total,
-        average: trendRes.data.average
-      }
+      revenueTrend.value = trendRes.data
     }
     if (activationRes.status === 200) {
       productActivation.value = activationRes.data
     }
   } catch (error) {
-    toast.error('获取统计数据失败')
-    console.error('Failed to fetch stats:', error)
+    toast.error(error instanceof Error ? error.message : '获取统计数据失败')
+    console.error(error)
   } finally {
     loading.value = false
   }
