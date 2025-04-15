@@ -1,5 +1,6 @@
 **/.env
-**/.env.production
+**/.env.*
+
 **/node_modules
 **/dist
-data/
+**/data/

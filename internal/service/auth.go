@@ -34,6 +34,11 @@ func (s *AuthService) Login(c *gin.Context) {
 	// 获取用户
 	user, err := model.GetUserByUsername(req.Username)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.Error(http.StatusInternalServerError, "系统错误"))
+		return
+	}
+
+	if user == nil {
 		c.JSON(http.StatusUnauthorized, model.Error(http.StatusUnauthorized, "用户名或密码错误"))
 		return
 	}

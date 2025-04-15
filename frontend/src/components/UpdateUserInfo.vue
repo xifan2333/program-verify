@@ -55,7 +55,7 @@ const handleUpdate = async () => {
 </script>
 
 <template>
-  <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex-center z-50">
+  <div v-if="props.show" class="fixed inset-0 bg-black bg-opacity-50 flex-center z-50">
     <div class="w-96 p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl font-bold">修改用户信息</h2>

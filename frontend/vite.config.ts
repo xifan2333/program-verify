@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import UnoCSS from 'unocss/vite'
 
@@ -10,7 +10,7 @@ export default defineConfig({
   ],
   build: {
     outDir: './dist',
-    assetsDir: 'assets',
+    assetsDir: 'static',
     emptyOutDir: true,
     rollupOptions: {
       output: {
@@ -24,5 +24,5 @@ export default defineConfig({
     alias: {
       '@': '/src',
     },
-  }
+  },
 })

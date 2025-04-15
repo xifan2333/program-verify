@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 import type { RouteRecordRaw } from "vue-router";
-import { api } from "../api/config";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -40,7 +39,7 @@ const router = createRouter({
 });
 
 // 路由守卫
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _, next) => {
   const token = localStorage.getItem("token");
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 

@@ -1,9 +1,12 @@
 package router
 
 import (
+	"io/fs"
+	"net/http"
 	"program-verify/internal/config"
 	"program-verify/internal/handler"
 	"program-verify/internal/service"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -11,17 +14,15 @@ import (
 )
 
 // SetupRouter 设置路由
-func SetupRouter() *gin.Engine {
+func SetupRouter(fsys fs.FS, indexPage []byte) *gin.Engine {
 	// 加载配置
 	cfg := config.LoadConfig()
 
 	// 创建认证服务
 	authService := service.NewAuthService(cfg.JWTSecret)
-	staticPath := cfg.StaticPath
 
 	// 创建Gin引擎
 	r := gin.Default()
-	gin.SetMode(gin.DebugMode)
 
 	// 配置CORS
 	config := cors.DefaultConfig()
@@ -30,10 +31,6 @@ func SetupRouter() *gin.Engine {
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	config.MaxAge = 12 * time.Hour
 	r.Use(cors.New(config))
-
-	// 静态文件服务
-	r.Static("/assets", staticPath+"/assets")
-	r.StaticFile("/favicon.ico", staticPath+"/favicon.ico")
 
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
@@ -83,9 +80,26 @@ func SetupRouter() *gin.Engine {
 		}
 	}
 
-	// 处理前端路由
+	// 设置静态文件服务
+	r.StaticFS("/static", http.FS(fsys))
+
+	// 设置 NoRoute 处理器
 	r.NoRoute(func(c *gin.Context) {
-		c.File("./static/index.html")
+		// 如果是 API 请求，返回 404
+		if strings.HasPrefix(c.Request.RequestURI, "/api") {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// 如果是静态资源请求，尝试从文件系统提供
+		if strings.HasPrefix(c.Request.RequestURI, "/static") {
+			c.FileFromFS(c.Request.RequestURI, http.FS(fsys))
+			return
+		}
+
+		// 其他请求返回 index.html
+		c.Header("Cache-Control", "no-cache")
+		c.Data(http.StatusOK, "text/html; charset=utf-8", indexPage)
 	})
 
 	return r

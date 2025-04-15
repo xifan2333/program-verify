@@ -342,6 +342,11 @@ const resetFilters = () => {
 // 导出功能
 const handleExport = async () => {
   exportLoading.value = true
+  if (licenses.value.length === 0) {
+    toast.error('没有数据可以导出')
+    exportLoading.value = false
+    return
+  }
   try {
     // 构建导出数据
     const headers = ['ID', '产品', '许可证密钥', '有效期(天)', '状态', '激活时间', '过期时间', '备注']

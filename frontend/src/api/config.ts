@@ -1,10 +1,11 @@
-
 import { globalToastMethods } from "../plugins/toast";
 const toast = globalToastMethods;
+
+
 // API配置
 export const API_CONFIG = {
   // API基础URL
-  BASE_URL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1',
+  BASE_URL: import.meta.env.DEV ? 'http://localhost:8080/api/v1' : `${window.location.origin}/api/v1`,
   
   // 超时时间（毫秒）
   TIMEOUT: 10000,
@@ -58,7 +59,7 @@ export const API_ROUTES = {
 // 统一处理未授权
 const handleUnauthorized = () => {
   localStorage.removeItem('token')
-  toast.error('无效的令牌认证，请重新登录')
+ 
   // 如果在路由守卫中，不需要重复跳转
   if (!window.location.pathname.includes('/login')) {
     window.location.href = '/login'
@@ -76,11 +77,8 @@ export const api = {
   // 构建完整URL
   buildUrl: (path: string) => {
     const baseUrl = API_CONFIG.BASE_URL
-    // 如果baseUrl是相对路径，直接拼接
-    if (baseUrl.startsWith('/')) {
-      return `${baseUrl}${path}`
-    }
-    // 否则使用URL构造函数
+    // 开发环境使用相对路径，生产环境使用完整URL
+   
     return `${baseUrl}${path}`
   },
   
@@ -90,8 +88,9 @@ export const api = {
     
     // 处理未授权
     if (response.status === 401 || data.status === 401) {
+      toast.error(data.message || '无效的令牌认证，请重新登录')
       handleUnauthorized()
-      throw new Error('无效的令牌认证，请重新登录')
+      
     }
     
     // 处理其他错误

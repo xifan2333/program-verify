@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 )
 
 type Config struct {
@@ -16,9 +15,6 @@ type Config struct {
 	// 管理员配置
 	AdminUsername string
 	AdminPassword string
-
-	// 静态文件配置
-	StaticPath string
 }
 
 func LoadConfig() *Config {
@@ -30,14 +26,6 @@ func LoadConfig() *Config {
 	cfg.JWTSecret = getEnvOrDefault("JWT_SECRET", "your-secret-key")
 	cfg.AdminUsername = getEnvOrDefault("ADMIN_USERNAME", "admin")
 	cfg.AdminPassword = getEnvOrDefault("ADMIN_PASSWORD", "password")
-
-	// 设置静态文件路径
-	execPath, err := os.Executable()
-	if err != nil {
-		cfg.StaticPath = "static"
-	} else {
-		cfg.StaticPath = filepath.Join(filepath.Dir(execPath), "static")
-	}
 
 	return cfg
 }

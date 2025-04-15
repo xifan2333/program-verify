@@ -9,18 +9,20 @@ type Response struct {
 
 // Success 成功响应
 func Success(data interface{}, message string) *Response {
-	return &Response{
+	response := &Response{
 		Status:  200,
 		Message: message,
 		Data:    data,
 	}
+	return response
 }
 
 // Error 错误响应
 func Error(status int, message string) *Response {
-	return &Response{
+	response := &Response{
 		Status:  status,
 		Message: message,
 		Data:    nil,
 	}
+	return response
 }
